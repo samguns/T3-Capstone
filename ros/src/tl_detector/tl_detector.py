@@ -54,6 +54,7 @@ class TLDetector(object):
         self.last_state = TrafficLight.UNKNOWN
         self.last_wp = -1
         self.state_count = 0
+        self.has_image = False
 
         rospy.spin()
 
@@ -126,8 +127,7 @@ class TLDetector(object):
 
         """
         # return light.state
-        if(not self.has_image):
-            self.prev_light_loc = None
+        if not self.has_image:
             return False
 
         cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "rgb8")
@@ -147,17 +147,18 @@ class TLDetector(object):
         check_light_state = False
         light_wp = None
 
-        if(self.pose and len(self.stop_line_idxs) > 0):
+        if self.pose and len(self.stop_line_idxs) > 0:
             # find the closest visible traffic light (if one exists)
             closest_stop_line_index = self.stop_line_idxs[0]
             d = closest_stop_line_index - self.car_position
-            if d >= 0 and d < TL_DETCTION_LOOKAHEAD_WPS:
+            if 0 <= d < TL_DETCTION_LOOKAHEAD_WPS:
                 check_light_state = True
+                light_wp = closest_stop_line_index
 
         if check_light_state:
             state = self.get_light_state()
             return light_wp, state
-        #self.waypoints = None
+
         return -1, TrafficLight.UNKNOWN
 
 if __name__ == '__main__':
