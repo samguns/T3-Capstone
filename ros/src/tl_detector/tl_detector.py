@@ -22,6 +22,12 @@ class TLDetector(object):
         self.pose = None
         self.camera_image = None
         self.lights = []
+        self.car_position = -1
+        self.waypoints_2d = None
+        self.stop_line_idxs = []
+
+        config_string = rospy.get_param("/traffic_light_config")
+        self.config = yaml.load(config_string)
 
         sub1 = rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         sub2 = rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
@@ -38,9 +44,6 @@ class TLDetector(object):
 
         rospy.Subscriber('/vehicle/car_position', Int32, self.car_position_cb)
 
-        config_string = rospy.get_param("/traffic_light_config")
-        self.config = yaml.load(config_string)
-
         self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
 
         self.bridge = CvBridge()
@@ -51,10 +54,6 @@ class TLDetector(object):
         self.last_state = TrafficLight.UNKNOWN
         self.last_wp = -1
         self.state_count = 0
-        self.car_position = -1
-        self.waypoints_2d = None
-        self.waypoint_tree = None
-        self.stop_line_idxs = None
 
         rospy.spin()
 
@@ -65,15 +64,15 @@ class TLDetector(object):
         if not self.waypoints_2d:
             self.waypoints_2d = [[waypoint.pose.pose.position.x, waypoint.pose.pose.position.y] for waypoint in
                                  waypoints.waypoints]
-            self.waypoint_tree = KDTree(self.waypoints_2d)
+            waypoint_tree = KDTree(self.waypoints_2d)
 
-        stop_line_positions = self.config['stop_line_positions']
-        for i, stop_line in enumerate(stop_line_positions):
-            # Get stop line waypoint index
-            idx = self.waypoint_tree.query([stop_line[0], stop_line[1]], 1)[1]
-            self.stop_line_idxs.append(idx)
+            stop_line_positions = self.config['stop_line_positions']
+            for i, stop_line in enumerate(stop_line_positions):
+                # Get stop line waypoint index
+                idx = waypoint_tree.query([stop_line[0], stop_line[1]], 1)[1]
+                self.stop_line_idxs.append(idx)
 
-        self.stop_line_idxs.sort()
+            self.stop_line_idxs.sort()
 
     def traffic_cb(self, msg):
         self.lights = msg.lights
@@ -112,7 +111,10 @@ class TLDetector(object):
         self.state_count += 1
 
     def car_position_cb(self, msg):
-        self.car_position = msg
+        self.car_position = msg.data
+        if len(self.stop_line_idxs) == 0:
+            return
+
         if self.car_position > self.stop_line_idxs[0]:
             self.stop_line_idxs = self.stop_line_idxs[1:]
 
@@ -145,7 +147,7 @@ class TLDetector(object):
         check_light_state = False
         light_wp = None
 
-        if(self.pose):
+        if(self.pose and len(self.stop_line_idxs) > 0):
             # find the closest visible traffic light (if one exists)
             closest_stop_line_index = self.stop_line_idxs[0]
             d = closest_stop_line_index - self.car_position

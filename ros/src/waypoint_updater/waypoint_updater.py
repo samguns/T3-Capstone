@@ -79,7 +79,7 @@ class WaypointUpdater(object):
         return closest_idx
 
     def publish_current_position(self):
-        self.car_position_pub.publish(self.closest_wp_idx)
+        self.car_position_pub.publish(Int32(self.closest_wp_idx))
 
     def publish_waypoints(self):
         final_lane = self.generate_lane()
