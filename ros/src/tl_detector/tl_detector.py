@@ -13,6 +13,7 @@ import yaml
 from scipy.spatial import KDTree
 
 STATE_COUNT_THRESHOLD = 3
+TL_DETCTION_LOOKAHEAD_WPS = 40
 
 class TLDetector(object):
     def __init__(self):
@@ -152,12 +153,12 @@ class TLDetector(object):
                                                      self.pose.pose.position.y)
 
             # find the closest visible traffic light (if one exists)
-            diff = len(self.waypoints.waypoints)
+            diff = TL_DETCTION_LOOKAHEAD_WPS
             for i, light in enumerate(self.lights):
                 # Get stop line waypoint
                 line = stop_line_positions[i]
                 tmp_wp_idx = self.get_closest_waypoint(line[0], line[1])
-                # Fin closest stop line waypoint index
+                # Find closest stop line waypoint index
                 d = tmp_wp_idx - car_position
                 if d >= 0 and d < diff:
                     diff = d
