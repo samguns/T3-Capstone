@@ -117,7 +117,8 @@ class TLDetector(object):
             return
 
         if self.car_position > self.stop_line_idxs[0]:
-            self.stop_line_idxs = self.stop_line_idxs[1:]
+            if not self.config['is_site']:
+                self.stop_line_idxs = self.stop_line_idxs[1:]
 
     def get_light_state(self):
         """Determines the current color of the traffic light
