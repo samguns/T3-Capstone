@@ -5,8 +5,12 @@ import tensorflow as tf
 
 class TLClassifier(object):
     def __init__(self, is_site):
+        self.IGNORE_THRESHOLD = 6
+        self.confidence = 0.6
         graph_file = './sim/frozen_inference_graph.pb'
         if is_site:
+            self.IGNORE_THRESHOLD = 3
+            self.confidence = 0.5
             graph_file = './site/frozen_inference_graph.pb'
         graph = self.load_graph(graph_file)
 
@@ -16,13 +20,11 @@ class TLClassifier(object):
         self.detection_classes = graph.get_tensor_by_name('detection_classes:0')
 
         self.tf_session = tf.Session(graph=graph)
-        self.confidence = 0.6
         self.light_state_dict = {0: TrafficLight.UNKNOWN,
                                  1: TrafficLight.GREEN,
                                  2: TrafficLight.RED,
                                  3: TrafficLight.YELLOW}
         self.ignore_cnt = 0
-        self.IGNORE_THRESHOLD = 6
         self.light_state = TrafficLight.UNKNOWN
 
 
