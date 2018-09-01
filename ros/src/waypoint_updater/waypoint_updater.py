@@ -32,6 +32,13 @@ class WaypointUpdater(object):
     def __init__(self):
         rospy.init_node('waypoint_updater')
 
+        self.pose = None
+        self.base_waypoints = None
+        self.waypoints_2d = None
+        self.waypoint_tree = None
+        self.stopline_wp_idx = -1
+        self.closest_wp_idx = -1
+
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
@@ -42,13 +49,6 @@ class WaypointUpdater(object):
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
         self.car_position_pub = rospy.Publisher('/vehicle/car_position', Int32, queue_size=1)
-
-        self.pose = None
-        self.base_waypoints = None
-        self.waypoints_2d = None
-        self.waypoint_tree = None
-        self.stopline_wp_idx = -1
-        self.closest_wp_idx = -1
 
         self.loop()
 
