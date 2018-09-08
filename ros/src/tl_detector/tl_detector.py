@@ -75,6 +75,9 @@ class TLDetector(object):
 
             self.stop_line_idxs.sort()
 
+        if self.config['is_site']:
+            self.stop_line_idxs[0] -= 3
+
     def traffic_cb(self, msg):
         self.lights = msg.lights
 
